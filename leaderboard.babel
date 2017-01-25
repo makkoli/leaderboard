@@ -1,0 +1,98 @@
+// Row in the leaderboard table
+var LeaderboardRow = React.createClass({
+  render: function() {
+    return (
+      <tr>
+        <td>
+          {this.props.number}
+        </td>
+        <td>
+          <img src={this.props.img} className="img-circle table-img"></img>
+          {this.props.username}
+        </td>
+        <td className="text-center">
+          {this.props.recentPts}
+        </td>
+        <td className="text-center">
+          {this.props.allTimePts}
+        </td>
+      </tr>
+    );
+  }
+});
+
+// Component holding the leaderboard
+var Leaderboard = React.createClass({
+  getInitialState: function() {
+    return {
+      recent: null,
+      allTime: null,
+      sortBy: "recent"
+    };
+  },
+  
+  // Retrieve the leaderboard data once component mounts
+  componentDidMount: function() {
+    fetch("https://fcctop100.herokuapp.com/api/fccusers/top/recent")
+      .then(res => res.json())
+      .then(res => this.setState({
+        recent: res
+      }));
+
+    fetch("https://fcctop100.herokuapp.com/api/fccusers/top/alltime")
+      .then(res => res.json())
+      .then(res => this.setState({
+        allTime: res
+      }));
+  },
+  
+  // Sort the leaderboard based on user click
+  onClick: function(sort) {
+    this.setState({
+      sortBy: sort
+    });
+  },
+  
+  // Sort and build the leaderboard rows
+  sortList(leaderboardRows, sortBy) {
+    if (this.state.sortBy == "recent") {
+      this.state.recent.forEach(function(curr, index) {
+        leaderboardRows.push(<LeaderboardRow number={index + 1} img={curr.img} username={curr.username} recentPts={curr.recent} allTimePts={curr.alltime} />);
+      });
+    }
+    else {
+      this.state.allTime.forEach(function(curr, index) {
+        leaderboardRows.push(<LeaderboardRow number={index + 1} img={curr.img} username={curr.username} recentPts={curr.recent} allTimePts={curr.alltime} />);
+      });
+    }
+  },
+
+  render: function() {
+    var leaderboardRows = [];
+    if (this.state.recent != null && this.state.allTime != null) {
+      this.sortList(leaderboardRows, this.state.sortBy);
+    }
+    
+    return (
+      <tbody>
+        <tr className="info">
+          <td><strong>#</strong></td>
+          <td><strong>Camper Name</strong></td>
+          <td className="text-center" onClick={this.onClick.bind(this, "recent")}>
+            <strong>
+              <span className={this.state.sortBy == "recent" ? "glyphicon glyphicon-chevron-down" : ""}></span> Points in last 30 days
+            </strong>
+          </td>
+          <td className="text-center" onClick={this.onClick.bind(this, "allTime")}>
+            <strong>
+              <span className={this.state.sortBy == "allTime" ? "glyphicon glyphicon-chevron-down" : ""}></span> All time points
+            </strong>
+          </td>
+          </tr>
+        { leaderboardRows }
+        </tbody>
+    );
+  }
+});
+
+ReactDOM.render(<Leaderboard />, document.getElementById("leaderboard"));
